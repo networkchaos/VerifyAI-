@@ -1,6 +1,6 @@
-# Backend Explanation - VerifyAI
+# Backend Explanation - Smart Vote Kenya
 
-This document explains the backend architecture, setup, and features of the VerifyAI system.
+This document explains the backend architecture, setup, and features of the Smart Vote Kenya system.
 
 ## 📦 Face Detection Models
 

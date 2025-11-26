@@ -7,10 +7,10 @@
             <Zap class="w-4 h-4 text-background" />
           </div>
           <h1 class="text-4xl font-bold bg-gradient-to-r from-primary via-accent-1 to-accent-2 bg-clip-text text-transparent">
-            VerifyAI
+            Smart Vote Kenya
           </h1>
         </div>
-        <p class="text-foreground/60 ml-11">Secure identity verification powered by advanced technology</p>
+        <p class="text-foreground/60 ml-11">The intelligent voter registration system</p>
       </div>
 
       <!-- Notification Box -->
@@ -22,13 +22,17 @@
               ? 'bg-color-success/10 border-color-success/30 glow-cyan'
               : notification.type === 'error'
               ? 'bg-red-500/10 border-red-500/30'
+              : notification.type === 'info'
+              ? 'bg-primary/10 border-primary/30 glow-cyan'
               : 'bg-color-warning/10 border-color-warning/30 glow-magenta'
           }`"
         >
           <CheckCircle v-if="notification.type === 'success'" class="h-5 w-5 text-color-success flex-shrink-0 mt-0.5" />
-          <AlertCircle v-else class="h-5 w-5 flex-shrink-0 mt-0.5" :class="notification.type === 'error' ? 'text-red-500' : 'text-color-warning'" />
+          <AlertCircle v-else-if="notification.type === 'error' || notification.type === 'warning'" class="h-5 w-5 flex-shrink-0 mt-0.5" :class="notification.type === 'error' ? 'text-red-500' : 'text-color-warning'" />
+          <Info v-else-if="notification.type === 'info'" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <AlertCircle v-else class="h-5 w-5 flex-shrink-0 mt-0.5 text-color-warning" />
           <div class="flex-1">
-            <p :class="notification.type === 'success' ? 'text-color-success' : notification.type === 'error' ? 'text-red-500' : 'text-color-warning'">
+            <p :class="notification.type === 'success' ? 'text-color-success' : notification.type === 'error' ? 'text-red-500' : notification.type === 'info' ? 'text-primary' : 'text-color-warning'">
               <span class="font-semibold">{{ notification.title }}</span>
               <span v-if="notification.message"> {{ notification.message }}</span>
             </p>
@@ -228,15 +232,34 @@
                 >
                   <Loader2 class="h-6 w-6 text-white animate-spin" />
                 </button>
-                <button
-                  v-else
-                  type="button"
-                  @click="openCropModal('front', idImage)"
-                  class="absolute top-2 right-2 px-3 py-1.5 bg-primary/90 hover:bg-primary text-background text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
-                >
-                  <Crop class="h-3 w-3" />
-                  Crop
-                </button>
+                <div v-else class="absolute top-2 right-2 flex gap-2">
+                  <button
+                    type="button"
+                    @click="openRotateModal('front', idImage)"
+                    class="px-3 py-1.5 bg-surface-light/90 hover:bg-surface-light text-foreground text-xs font-semibold rounded-lg transition-all flex items-center gap-1 shadow-lg"
+                    title="Rotate image"
+                  >
+                    <RotateCw class="h-3 w-3" />
+                    Rotate
+                  </button>
+                  <button
+                    type="button"
+                    @click="openCropModal('front', idImage)"
+                    class="px-3 py-1.5 bg-primary/90 hover:bg-primary text-background text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
+                  >
+                    <Crop class="h-3 w-3" />
+                    Crop
+                  </button>
+                  <button
+                    type="button"
+                    @click="removeIdImage('front')"
+                    class="px-3 py-1.5 bg-red-500/90 hover:bg-red-500 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
+                    title="Remove image"
+                  >
+                    <Trash2 class="h-3 w-3" />
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -263,14 +286,34 @@
                   alt="ID back preview"
                   class="relative max-h-40 rounded-lg border border-color-border/30 w-full object-cover"
                 />
-                <button
-                  type="button"
-                  @click="openCropModal('back', idBackImage)"
-                  class="absolute top-2 right-2 px-3 py-1.5 bg-accent-2/90 hover:bg-accent-2 text-background text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
-                >
-                  <Crop class="h-3 w-3" />
-                  Crop
-                </button>
+                <div class="absolute top-2 right-2 flex gap-2">
+                  <button
+                    type="button"
+                    @click="openRotateModal('back', idBackImage)"
+                    class="px-3 py-1.5 bg-surface-light/90 hover:bg-surface-light text-foreground text-xs font-semibold rounded-lg transition-all flex items-center gap-1 shadow-lg"
+                    title="Rotate image"
+                  >
+                    <RotateCw class="h-3 w-3" />
+                    Rotate
+                  </button>
+                  <button
+                    type="button"
+                    @click="openCropModal('back', idBackImage)"
+                    class="px-3 py-1.5 bg-accent-2/90 hover:bg-accent-2 text-background text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
+                  >
+                    <Crop class="h-3 w-3" />
+                    Crop
+                  </button>
+                  <button
+                    type="button"
+                    @click="removeIdImage('back')"
+                    class="px-3 py-1.5 bg-red-500/90 hover:bg-red-500 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
+                    title="Remove image"
+                  >
+                    <Trash2 class="h-3 w-3" />
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -312,22 +355,35 @@
                     :value="model.id"
                     :disabled="!model.isAvailable"
                   >
-                    {{ model.name }}{{ !model.isAvailable ? ' (Not available)' : '' }}
+                    {{ model.name }}{{ !model.isAvailable ? ' (Not available - install Python packages)' : '' }}
                   </option>
                 </select>
               </div>
             </div>
           </div>
 
-          <button
-            v-if="!cameraActive"
-            type="button"
-            @click="startCamera"
-            class="w-full bg-gradient-to-r from-primary to-accent-1 hover:from-primary-dark hover:to-primary text-background font-semibold py-4 rounded-lg flex items-center justify-center gap-3 transition-all duration-300 glow-cyan hover:glow-cyan group"
-          >
-            <Camera class="h-5 w-5 group-hover:scale-110 transition-transform" />
-            <span>Activate Camera</span>
-          </button>
+          <div v-if="!cameraActive" class="space-y-3">
+            <div class="flex gap-3">
+              <button
+                type="button"
+                @click="startCamera"
+                class="flex-1 bg-gradient-to-r from-primary to-accent-1 hover:from-primary-dark hover:to-primary text-background font-semibold py-4 rounded-lg flex items-center justify-center gap-3 transition-all duration-300 glow-cyan hover:glow-cyan group"
+              >
+                <Camera class="h-5 w-5 group-hover:scale-110 transition-transform" />
+                <span>Capture Photo</span>
+              </button>
+              <button
+                type="button"
+                @click="selfieFileRef?.click()"
+                class="flex-1 bg-gradient-to-r from-accent-2 to-accent-3 hover:from-accent-2-dark hover:to-accent-3 text-white font-semibold py-4 rounded-lg flex items-center justify-center gap-3 transition-all duration-300 glow-cyan hover:glow-cyan group"
+              >
+                <Upload class="h-5 w-5 group-hover:scale-110 transition-transform" />
+                <span>Upload Selfie</span>
+              </button>
+            </div>
+            <p class="text-xs text-foreground/60 text-center">Choose to capture with camera or upload an existing photo</p>
+            <input ref="selfieFileRef" type="file" accept="image/*" @change="handleSelfieFileChange" class="hidden" />
+          </div>
           <div v-else class="space-y-4">
             <div class="relative rounded-xl overflow-hidden border-2 border-primary/30 glow-cyan bg-black min-h-[400px] flex items-center justify-center scan-line">
               <video 
@@ -378,6 +434,14 @@
               </button>
               <button
                 type="button"
+                @click="selfieFileRef?.click()"
+                class="flex-1 bg-gradient-to-r from-accent-2 to-accent-3 hover:from-accent-2-dark hover:to-accent-3 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-lg group"
+              >
+                <Upload class="h-5 w-5 group-hover:scale-110 transition-transform" />
+                Upload Instead
+              </button>
+              <button
+                type="button"
                 @click="stopCamera"
                 class="flex-1 bg-color-warning/20 hover:bg-color-warning/30 text-color-warning font-semibold py-3 rounded-lg transition-all duration-300 border border-color-warning/30"
               >
@@ -386,14 +450,55 @@
             </div>
           </div>
 
-          <div v-if="selfieImage" class="mt-4 relative group">
+          <!-- Face Detection Preview (when uploading) -->
+          <div v-if="detectingFace" class="mt-4 relative rounded-xl overflow-hidden border-2 border-primary/30 glow-cyan bg-black min-h-[300px] flex items-center justify-center">
+            <div v-if="selfieImage" class="relative w-full h-full">
+              <img
+                :src="selfieImage"
+                alt="Selfie preview"
+                class="w-full h-full object-contain"
+              />
+              <div class="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div class="text-center text-white">
+                  <Loader2 class="h-8 w-8 animate-spin mx-auto mb-2" />
+                  <p class="text-sm">Detecting face...</p>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center text-white">
+              <Loader2 class="h-8 w-8 animate-spin mx-auto mb-2" />
+              <p class="text-sm">Processing image...</p>
+            </div>
+          </div>
+
+          <!-- Selfie Preview (after face detection) -->
+          <div v-if="selfieImage && !detectingFace" class="mt-4 relative group">
             <div class="absolute inset-0 bg-gradient-to-r from-accent-2 to-accent-3 rounded-lg blur opacity-20 group-hover:opacity-40 transition" />
-            <img
-              :src="selfieImage || '/placeholder.svg'"
-              alt="Selfie preview"
-              class="relative max-h-48 rounded-lg border border-color-border/30 w-full object-cover"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-lg" />
+            <div class="relative rounded-lg border-2 overflow-hidden" :class="faceDetected ? 'border-color-success/50 glow-cyan' : 'border-red-500/50'">
+              <img
+                :src="selfieImage || '/placeholder.svg'"
+                alt="Selfie preview"
+                class="w-full max-h-48 object-cover"
+              />
+              <!-- Face Detection Status Badge -->
+              <div v-if="faceDetected" class="absolute top-2 left-2 px-3 py-1.5 bg-color-success/90 text-background text-xs font-semibold rounded-lg flex items-center gap-1">
+                <CheckCircle class="h-3 w-3" />
+                Face Detected
+              </div>
+              <div v-else-if="faceDetectionError" class="absolute top-2 left-2 px-3 py-1.5 bg-red-500/90 text-background text-xs font-semibold rounded-lg flex items-center gap-1">
+                <AlertCircle class="h-3 w-3" />
+                {{ faceDetectionError }}
+              </div>
+              <button
+                type="button"
+                @click="removeSelfie"
+                class="absolute top-2 right-2 px-3 py-1.5 bg-red-500/90 hover:bg-red-500 text-background text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
+              >
+                <X class="h-3 w-3" />
+                Remove
+              </button>
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-lg pointer-events-none" />
           </div>
         </div>
 
@@ -420,6 +525,16 @@
         @cropped="handleCropped"
       />
     </Transition>
+
+    <!-- Image Rotate Modal -->
+    <Transition name="modal">
+      <ImageRotator
+        v-if="showRotateModal"
+        :image-src="rotateImageSrc"
+        @close="closeRotateModal"
+        @rotated="handleRotated"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -427,8 +542,9 @@
 import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { Camera, Upload, CheckCircle, AlertCircle, Loader2, Zap, Info, X, Crop } from 'lucide-vue-next'
+import { Camera, Upload, CheckCircle, AlertCircle, Loader2, Zap, Info, X, Crop, RotateCw, RotateCcw, Trash2 } from 'lucide-vue-next'
 import ImageCropper from './ImageCropper.vue'
+import ImageRotator from './ImageRotator.vue'
 
 const router = useRouter()
 
@@ -441,14 +557,23 @@ const address = ref('')
 const idImage = ref(null)
 const idBackImage = ref(null)
 const selfieImage = ref(null)
+const idImageRotation = ref(0)
+const idBackImageRotation = ref(0)
 const showCropModal = ref(false)
 const cropImageType = ref(null) // 'front' or 'back'
 const cropImageSrc = ref(null)
 const cropperRef = ref(null)
 
+const showRotateModal = ref(false)
+const rotateImageType = ref(null) // 'front' or 'back'
+const rotateImageSrc = ref(null)
+
 const cameraActive = ref(false)
 const loading = ref(false)
 const extractingData = ref(false)
+const detectingFace = ref(false)
+const faceDetected = ref(false)
+const faceDetectionError = ref(null)
 const response = ref(null)
 const showIdTips = ref(false)
 const ocrModel = ref('tesseract')
@@ -472,6 +597,7 @@ const videoRef = ref(null)
 const canvasRef = ref(null)
 const idFileRef = ref(null)
 const idBackFileRef = ref(null)
+const selfieFileRef = ref(null)
 const streamRef = ref(null)
 
 const validateKenyanId = (id) => {
@@ -609,6 +735,12 @@ const captureSelfie = () => {
     return
   }
 
+  // Check video dimensions
+  if (video.videoWidth === 0 || video.videoHeight === 0) {
+    showNotification('error', 'Camera Error', 'Camera is not providing valid video. Please try again.')
+    return
+  }
+
   try {
     const ctx = canvas.getContext('2d')
     if (!ctx) {
@@ -616,36 +748,139 @@ const captureSelfie = () => {
       return
     }
 
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    // Set canvas dimensions to match video (ensure minimum size for quality)
+    const minWidth = 640
+    const minHeight = 480
+    const width = Math.max(video.videoWidth, minWidth)
+    const height = Math.max(video.videoHeight, minHeight)
+    
+    canvas.width = width
+    canvas.height = height
+
+    // Clear canvas first
+    ctx.clearRect(0, 0, width, height)
 
     // Flip the canvas horizontally to un-mirror the image
-    ctx.translate(canvas.width, 0)
+    ctx.save()
+    ctx.translate(width, 0)
     ctx.scale(-1, 1)
 
-    // Draw video frame to canvas (now un-mirrored)
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    // Draw video frame to canvas (now un-mirrored) with better quality
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(video, 0, 0, width, height)
     
     // Reset transform
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.restore()
 
-    // Convert to image
-    const imageData = canvas.toDataURL('image/jpeg', 0.95)
+    // Convert to image with high quality
+    const imageData = canvas.toDataURL('image/jpeg', 0.92)
     
     if (!imageData || imageData === 'data:,') {
       showNotification('error', 'Capture Failed', 'Failed to capture image. Please try again.')
       return
     }
 
+    // Validate image data size (should be at least a few KB)
+    const base64Length = imageData.length - 'data:image/jpeg;base64,'.length
+    const imageSizeKB = (base64Length * 3) / 4 / 1024
+    
+    if (imageSizeKB < 10) {
+      console.warn('Captured image is very small:', imageSizeKB, 'KB')
+      showNotification('warning', 'Low Quality Image', 'The captured image seems low quality. Please ensure good lighting and try again.')
+    }
+
     selfieImage.value = imageData
     stopCamera()
-    showNotification('success', 'Selfie Captured', 'Your selfie has been captured successfully.')
+    
+    // Automatically trigger face detection for camera-captured images
+    detectingFace.value = true
+    faceDetected.value = false
+    faceDetectionError.value = null
+    
+    // Convert data URL to blob and send for face detection
+    fetch(imageData)
+      .then(res => res.blob())
+      .then(async (blob) => {
+        try {
+          const formData = new FormData()
+          formData.append('image', blob, 'selfie.jpg')
+          const selectedModel = faceModel.value || 'yolov8-face'
+          formData.append('model', selectedModel)
+          
+          const response = await axios.post('/api/detect-face', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 30000,
+          })
+          
+          if (response.data && response.data.hasFace) {
+            faceDetected.value = true
+            showNotification('success', 'Selfie Captured & Face Detected', 'Your selfie has been captured and face detected successfully!')
+          } else {
+            faceDetected.value = false
+            const errorMsg = response.data?.message || 'No face detected'
+            faceDetectionError.value = errorMsg
+            showNotification('warning', 'Face Detection', errorMsg + '. Please ensure your face is clearly visible.')
+          }
+        } catch (error) {
+          console.error('Face detection error:', error)
+          faceDetected.value = false
+          faceDetectionError.value = error.response?.data?.error || error.message || 'Face detection failed'
+          showNotification('warning', 'Face Detection', 'Could not verify face. The image will still be submitted.')
+        } finally {
+          detectingFace.value = false
+        }
+      })
+      .catch((error) => {
+        console.error('Error processing captured image:', error)
+        detectingFace.value = false
+        showNotification('success', 'Selfie Captured', 'Your selfie has been captured successfully.')
+      })
   } catch (error) {
     console.error('Error capturing selfie:', error)
     showNotification('error', 'Capture Failed', 'Failed to capture image. Please try again.')
+    detectingFace.value = false
   }
 }
+
+// Function to detect and correct image orientation
+const correctImageOrientation = (imageSrc, callback) => {
+  const img = new Image()
+  img.onload = () => {
+    // Create canvas to handle EXIF orientation
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    
+    // Check if image needs rotation based on dimensions
+    // If width < height, it might be rotated (portrait ID cards are usually taller than wide)
+    const isPortrait = img.width < img.height
+    
+    // For ID cards, we expect landscape orientation (wider than tall)
+    // If it's portrait, it might be rotated 90 or 270 degrees
+    let rotation = 0
+    
+    // Use EXIF.js if available, or check image dimensions
+    // For now, we'll use a simple heuristic: if height > width by significant margin, suggest rotation
+    if (img.height > img.width * 1.3) {
+      // Likely rotated 90 or 270 degrees
+      // We'll let the user rotate manually, but set initial rotation to 0
+      rotation = 0
+    }
+    
+    // Draw image to canvas
+    canvas.width = img.width
+    canvas.height = img.height
+    ctx.drawImage(img, 0, 0)
+    
+    callback(canvas.toDataURL('image/jpeg', 0.95), rotation)
+  }
+  img.onerror = () => {
+    callback(imageSrc, 0)
+  }
+  img.src = imageSrc
+}
+
+// Rotation is now handled by ImageRotator modal component
 
 const handleIdFileChange = async (e) => {
   const file = e.target.files?.[0]
@@ -668,7 +903,18 @@ const handleIdFileChange = async (e) => {
 
   const reader = new FileReader()
   reader.onload = async (event) => {
-    idImage.value = event.target?.result
+    const imageDataUrl = event.target?.result
+    
+    // Auto-detect and correct orientation
+    correctImageOrientation(imageDataUrl, (correctedImage, detectedRotation) => {
+      idImage.value = correctedImage
+      idImageRotation.value = detectedRotation
+      
+      // If rotation was detected, notify user
+      if (detectedRotation !== 0) {
+        showNotification('info', 'Orientation Detected', 'Image orientation has been automatically corrected. You can manually rotate if needed.')
+      }
+    })
     
     // Extract data from ID image
     extractingData.value = true
@@ -680,6 +926,11 @@ const handleIdFileChange = async (e) => {
       const response = await axios.post('/api/extract-id-data', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
+      
+      // Check for validation warning
+      if (response.data && response.data.validation && response.data.validation.warning) {
+        showNotification('warning', 'Image Validation Warning', response.data.validation.reason + ' Please ensure you uploaded the front side of your ID card.')
+      }
       
       if (response.data && response.data.extracted) {
         const data = response.data.extracted
@@ -698,7 +949,23 @@ const handleIdFileChange = async (e) => {
       }
     } catch (error) {
       console.error('Error extracting ID data:', error)
-      // Don't show error to user, just continue
+      
+      // Check if it's a validation error (wrong image type)
+      if (error.response && error.response.data && error.response.data.status === 'error') {
+        const errorMessage = error.response.data.message || 'Failed to extract ID data'
+        if (error.response.data.validation && !error.response.data.validation.isIdCard) {
+          showNotification('error', 'Wrong Image Type', errorMessage)
+          // Clear the image so user can upload correct one
+          idImage.value = null
+          if (idFileRef.value) {
+            idFileRef.value.value = ''
+          }
+        } else {
+          showNotification('error', 'Extraction Failed', errorMessage)
+        }
+      } else {
+        // Don't show error to user for other errors, just continue
+      }
     } finally {
       extractingData.value = false
     }
@@ -731,13 +998,118 @@ const handleIdBackFileChange = (e) => {
 
   const reader = new FileReader()
   reader.onload = (event) => {
-    idBackImage.value = event.target?.result
+    const imageDataUrl = event.target?.result
+    
+    // Auto-detect and correct orientation
+    correctImageOrientation(imageDataUrl, (correctedImage, detectedRotation) => {
+      idBackImage.value = correctedImage
+      idBackImageRotation.value = detectedRotation
+      
+      // If rotation was detected, notify user
+      if (detectedRotation !== 0) {
+        showNotification('info', 'Orientation Detected', 'Image orientation has been automatically corrected. You can manually rotate if needed.')
+      }
+    })
   }
   reader.onerror = () => {
     showNotification('error', 'File Read Error', 'Error reading file. Please try again.')
     e.target.value = '' // Reset input
   }
   reader.readAsDataURL(file)
+}
+
+const handleSelfieFileChange = async (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    showNotification('error', 'Invalid File Type', 'Please select an image file (JPG, PNG, etc.)')
+    e.target.value = '' // Reset input
+    return
+  }
+
+  // Validate file size (10MB max)
+  const maxSize = 10 * 1024 * 1024 // 10MB
+  if (file.size > maxSize) {
+    showNotification('error', 'File Too Large', 'Please select an image smaller than 10MB.')
+    e.target.value = '' // Reset input
+    return
+  }
+
+  // Stop camera if it's active
+  if (cameraActive.value) {
+    stopCamera()
+  }
+
+  // Read file first to show preview
+  const reader = new FileReader()
+  reader.onload = async (event) => {
+    selfieImage.value = event.target?.result
+    
+    // Start face detection
+    detectingFace.value = true
+    faceDetected.value = false
+    faceDetectionError.value = null
+    
+    try {
+      // Create FormData to send file
+      const formData = new FormData()
+      formData.append('image', file)
+      const selectedModel = faceModel.value || 'yolov8-face'
+      formData.append('model', selectedModel)
+      
+      console.log('Sending face detection request:', {
+        model: selectedModel,
+        filename: file.name,
+        size: file.size,
+      })
+      
+      // Call face detection API
+      const response = await axios.post('/api/detect-face', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000, // 30 second timeout
+      })
+      
+      console.log('Face detection response:', response.data)
+      
+      if (response.data && response.data.hasFace) {
+        faceDetected.value = true
+        showNotification('success', 'Face Detected', response.data.message || 'Face detected successfully!')
+      } else {
+        faceDetected.value = false
+        const errorMsg = response.data?.message || 'No face detected'
+        faceDetectionError.value = errorMsg
+        showNotification('warning', 'No Face Detected', errorMsg + '. Please upload a clear photo with your face visible.')
+      }
+    } catch (error) {
+      console.error('Face detection error:', error)
+      faceDetected.value = false
+      const errorMessage = error.response?.data?.message || error.message || 'Detection failed'
+      faceDetectionError.value = errorMessage
+      
+      // Still allow the upload, but warn the user
+      showNotification('warning', 'Face Detection Failed', errorMessage + '. Please ensure your face is clearly visible in the photo.')
+    } finally {
+      detectingFace.value = false
+    }
+  }
+  reader.onerror = () => {
+    showNotification('error', 'File Read Error', 'Error reading file. Please try again.')
+    e.target.value = '' // Reset input
+    detectingFace.value = false
+  }
+  reader.readAsDataURL(file)
+}
+
+const removeSelfie = () => {
+  selfieImage.value = null
+  faceDetected.value = false
+  faceDetectionError.value = null
+  detectingFace.value = false
+  if (selfieFileRef.value) {
+    selfieFileRef.value.value = ''
+  }
 }
 
 const validateForm = () => {
@@ -915,30 +1287,80 @@ const loadFaceModels = async () => {
   try {
     const response = await axios.get('/api/face-models')
     if (response.data && response.data.models) {
-      availableFaceModels.value = response.data.models.map(model => ({
-        id: model.id,
-        name: model.name,
-        description: model.description,
-        isAvailable: model.isAvailable,
-      }))
+      // Sort models: available first, then by name
+      const sortedModels = response.data.models
+        .map(model => ({
+          id: model.id,
+          name: model.name,
+          description: model.description,
+          isAvailable: model.isAvailable,
+        }))
+        .sort((a, b) => {
+          // Available models first
+          if (a.isAvailable && !b.isAvailable) return -1
+          if (!a.isAvailable && b.isAvailable) return 1
+          // Then sort by name
+          return a.name.localeCompare(b.name)
+        })
       
-      // Set default to first available model
+      availableFaceModels.value = sortedModels
+      
+      // Set default to first available model, or null (Auto) if none available
       if (availableFaceModels.value.length > 0) {
         const defaultModel = availableFaceModels.value.find(m => m.isAvailable)
         if (defaultModel) {
           faceModel.value = defaultModel.id
+        } else {
+          // No models available, use Auto (null)
+          faceModel.value = null
         }
       }
     }
   } catch (error) {
     console.error('Error loading face detection models:', error)
     // Keep default models if API fails
+    // Don't set faceModel to avoid overriding user selection
   }
 }
 
 onMounted(() => {
   loadOcrModels()
   loadFaceModels()
+  
+  // Check for retry data from history page
+  const retryData = localStorage.getItem('retryTestData')
+  if (retryData) {
+    try {
+      const data = JSON.parse(retryData)
+      
+      // Pre-fill form fields
+      if (data.fullName) fullName.value = data.fullName
+      if (data.nationalId) nationalId.value = data.nationalId
+      if (data.dateOfBirth) dateOfBirth.value = data.dateOfBirth
+      if (data.phoneNumber) phoneNumber.value = data.phoneNumber
+      if (data.address) address.value = data.address
+      
+      // Show notification based on retry mode
+      if (data.retryMode === 'same') {
+        showNotification('info', 'Retry Test', 'Form pre-filled with previous test data. You can modify any fields before submitting.')
+      } else if (data.retryMode === 'edit') {
+        showNotification('warning', 'Edit & Retry', 'Form pre-filled. Please review and correct the issues that caused the previous test to fail.')
+        
+        // Show previous validation errors if available
+        if (data.validationErrors && data.validationErrors.length > 0) {
+          setTimeout(() => {
+            showNotification('warning', 'Previous Errors', data.validationErrors.join(', '))
+          }, 2000)
+        }
+      }
+      
+      // Clear retry data after using it
+      localStorage.removeItem('retryTestData')
+    } catch (error) {
+      console.error('Error loading retry data:', error)
+      localStorage.removeItem('retryTestData')
+    }
+  }
 })
 
 const openCropModal = (type, imageSrc) => {
@@ -956,12 +1378,59 @@ const closeCropModal = () => {
 const handleCropped = (croppedImageSrc) => {
   if (cropImageType.value === 'front') {
     idImage.value = croppedImageSrc
+    idImageRotation.value = 0 // Reset rotation after cropping
     showNotification('success', 'Image Cropped', 'Front ID image has been cropped successfully.')
   } else if (cropImageType.value === 'back') {
     idBackImage.value = croppedImageSrc
+    idBackImageRotation.value = 0 // Reset rotation after cropping
     showNotification('success', 'Image Cropped', 'Back ID image has been cropped successfully.')
   }
   closeCropModal()
+}
+
+const openRotateModal = (type, imageSrc) => {
+  rotateImageType.value = type
+  rotateImageSrc.value = imageSrc
+  showRotateModal.value = true
+}
+
+const closeRotateModal = () => {
+  showRotateModal.value = false
+  rotateImageType.value = null
+  rotateImageSrc.value = null
+}
+
+const handleRotated = (rotatedImageSrc) => {
+  if (rotateImageType.value === 'front') {
+    idImage.value = rotatedImageSrc
+    idImageRotation.value = 0 // Reset rotation after applying
+    showNotification('success', 'Image Rotated', 'Front ID image has been rotated successfully.')
+  } else if (rotateImageType.value === 'back') {
+    idBackImage.value = rotatedImageSrc
+    idBackImageRotation.value = 0 // Reset rotation after applying
+    showNotification('success', 'Image Rotated', 'Back ID image has been rotated successfully.')
+  }
+  closeRotateModal()
+}
+
+const removeIdImage = (type) => {
+  if (type === 'front') {
+    idImage.value = null
+    idImageRotation.value = 0
+    // Reset the file input
+    if (idFileRef.value) {
+      idFileRef.value.value = ''
+    }
+    showNotification('info', 'Image Removed', 'Front ID image has been removed. You can upload a new one.')
+  } else if (type === 'back') {
+    idBackImage.value = null
+    idBackImageRotation.value = 0
+    // Reset the file input
+    if (idBackFileRef.value) {
+      idBackFileRef.value.value = ''
+    }
+    showNotification('info', 'Image Removed', 'Back ID image has been removed. You can upload a new one.')
+  }
 }
 
 onBeforeUnmount(() => {

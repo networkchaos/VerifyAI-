@@ -129,6 +129,127 @@
           </div>
         </div>
 
+        <!-- Extracted Data from ID Card -->
+        <div
+          v-if="result.extractedData"
+          class="glass rounded-2xl p-8 border-color-border/30 mb-8"
+        >
+          <div class="flex items-center gap-3 mb-6">
+            <FileText class="h-5 w-5 text-accent-2" />
+            <div class="w-1 h-6 bg-gradient-to-b from-accent-2 to-accent-3" />
+            <h3 class="text-xl font-semibold text-foreground">Extracted Data from ID Card</h3>
+            <span
+              v-if="result.extractedData.method"
+              class="text-xs px-2 py-1 bg-surface-light/40 rounded-lg text-foreground/60 ml-auto"
+            >
+              Method: {{ result.extractedData.method }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              v-if="result.extractedData.fullName"
+              class="border-l-2 pl-4"
+              :class="
+                result.extractedData.fullName !== result.data.fullName
+                  ? 'border-red-500/50 bg-red-500/5'
+                  : 'border-color-success/50 bg-color-success/5'
+              "
+            >
+              <p class="text-sm text-foreground/60 mb-1">Full Name</p>
+              <p class="text-foreground font-medium">{{ result.extractedData.fullName }}</p>
+              <p
+                v-if="result.extractedData.fullName !== result.data.fullName"
+                class="text-xs text-red-400 mt-1"
+              >
+                ⚠️ Does not match entered name
+              </p>
+              <p
+                v-else
+                class="text-xs text-color-success mt-1"
+              >
+                ✅ Matches entered name
+              </p>
+            </div>
+            <div
+              v-if="result.extractedData.idNumber"
+              class="border-l-2 pl-4"
+              :class="
+                result.extractedData.idNumber !== result.data.nationalId
+                  ? 'border-red-500/50 bg-red-500/5'
+                  : 'border-color-success/50 bg-color-success/5'
+              "
+            >
+              <p class="text-sm text-foreground/60 mb-1">ID Number</p>
+              <p class="text-foreground font-medium font-mono">{{ result.extractedData.idNumber }}</p>
+              <p
+                v-if="result.extractedData.idNumber !== result.data.nationalId"
+                class="text-xs text-red-400 mt-1"
+              >
+                ⚠️ Does not match entered ID
+              </p>
+              <p
+                v-else
+                class="text-xs text-color-success mt-1"
+              >
+                ✅ Matches entered ID
+              </p>
+            </div>
+            <div
+              v-if="result.extractedData.dateOfBirth"
+              class="border-l-2 pl-4"
+              :class="
+                result.extractedData.dateOfBirth !== result.data.dateOfBirth
+                  ? 'border-red-500/50 bg-red-500/5'
+                  : 'border-color-success/50 bg-color-success/5'
+              "
+            >
+              <p class="text-sm text-foreground/60 mb-1">Date of Birth</p>
+              <p class="text-foreground font-medium">{{ result.extractedData.dateOfBirth }}</p>
+              <p
+                v-if="result.extractedData.dateOfBirth !== result.data.dateOfBirth"
+                class="text-xs text-red-400 mt-1"
+              >
+                ⚠️ Does not match entered DOB
+              </p>
+              <p
+                v-else
+                class="text-xs text-color-success mt-1"
+              >
+                ✅ Matches entered DOB
+              </p>
+            </div>
+            <div
+              v-if="result.extractedData.sex"
+              class="border-l-2 border-primary/30 pl-4"
+            >
+              <p class="text-sm text-foreground/60 mb-1">Sex</p>
+              <p class="text-foreground font-medium">{{ result.extractedData.sex }}</p>
+            </div>
+            <div
+              v-if="result.extractedData.districtOfBirth"
+              class="border-l-2 border-primary/30 pl-4"
+            >
+              <p class="text-sm text-foreground/60 mb-1">District of Birth</p>
+              <p class="text-foreground font-medium">{{ result.extractedData.districtOfBirth }}</p>
+            </div>
+            <div
+              v-if="result.extractedData.placeOfIssue"
+              class="border-l-2 border-primary/30 pl-4"
+            >
+              <p class="text-sm text-foreground/60 mb-1">Place of Issue</p>
+              <p class="text-foreground font-medium">{{ result.extractedData.placeOfIssue }}</p>
+            </div>
+            <div
+              v-if="result.extractedData.dateOfIssue"
+              class="border-l-2 border-primary/30 pl-4"
+            >
+              <p class="text-sm text-foreground/60 mb-1">Date of Issue</p>
+              <p class="text-foreground font-medium">{{ result.extractedData.dateOfIssue }}</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Status-specific message -->
         <div
           v-if="!isVerified"
@@ -252,7 +373,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { CheckCircle, AlertCircle, Zap, ArrowLeft, Plus, History } from 'lucide-vue-next'
+import { CheckCircle, AlertCircle, Zap, ArrowLeft, Plus, History, FileText } from 'lucide-vue-next'
 
 const result = ref(null)
 const loading = ref(true)

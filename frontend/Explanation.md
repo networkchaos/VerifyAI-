@@ -1,6 +1,6 @@
-# Frontend Explanation - VerifyAI
+# Frontend Explanation - Smart Vote Kenya
 
-This document explains the frontend architecture, features, and setup of the VerifyAI system.
+This document explains the frontend architecture, features, and setup of the Smart Vote Kenya system.
 
 ## 📷 Camera Functionality
 

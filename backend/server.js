@@ -7,6 +7,7 @@ import registerRoutes from './routes/register.js'
 import extractIdDataRoutes from './routes/extractIdData.js'
 import ocrModelsRoutes from './routes/ocrModels.js'
 import faceModelsRoutes from './routes/faceModels.js'
+import detectFaceRoutes from './routes/detectFace.js'
 import verificationsRoutes from './routes/verifications.js'
 import { initDatabase } from './db/init.js'
 
@@ -31,6 +32,7 @@ app.use('/api/register', registerRoutes)
 app.use('/api/extract-id-data', extractIdDataRoutes)
 app.use('/api/ocr-models', ocrModelsRoutes)
 app.use('/api/face-models', faceModelsRoutes)
+app.use('/api/detect-face', detectFaceRoutes)
 app.use('/api/verifications', verificationsRoutes)
 
 // Health check

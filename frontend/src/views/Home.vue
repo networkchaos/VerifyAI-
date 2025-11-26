@@ -30,10 +30,10 @@
             </div>
           </div>
           <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent-1 to-accent-2 bg-clip-text text-transparent mb-4">
-            VerifyAI
+            Smart Vote Kenya
           </h1>
           <p class="text-xl text-foreground/60 max-w-2xl mx-auto">
-            Advanced identity verification powered by cutting-edge biometric technology
+            The intelligent voter registration system
           </p>
         </div>
 
@@ -43,7 +43,7 @@
             <div class="w-10 h-10 rounded-lg bg-accent-1/20 flex items-center justify-center mb-4 group-hover:bg-accent-1/30 transition-colors">
               <Shield class="w-5 h-5 text-accent-1" />
             </div>
-            <h3 class="text-lg font-semibold text-foreground mb-2">Secure Identity Verification</h3>
+            <h3 class="text-lg font-semibold text-foreground mb-2">Smart Vote Kenya</h3>
             <p class="text-foreground/60 text-sm">
               Advanced biometric scanning and AI-powered identity verification to prevent fraud and ensure authentic
               voter registration.

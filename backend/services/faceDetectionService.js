@@ -64,34 +64,161 @@ export const FACE_DETECTION_MODELS = {
   },
 }
 
+// Store the working Python command globally
+let WORKING_PYTHON = null
+
 /**
- * Check if Python is available
+ * Check if Python is available and has required packages
  */
 const checkPythonAvailable = () => {
   return new Promise((resolve) => {
-    const python = process.platform === 'win32' ? 'python' : 'python3'
-    const check = spawn(python, ['--version'])
+    // If we already found a working Python, use it
+    if (WORKING_PYTHON) {
+      resolve(true)
+      return
+    }
     
-    check.on('close', (code) => {
-      resolve(code === 0)
-    })
+    // Try multiple Python commands in order of preference
+    // On Windows, also try common Python installation paths
+    const pythonCommands = process.platform === 'win32' 
+      ? [
+          'python',
+          'py',
+          'python3',
+          'C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python311\\python.exe',
+          'C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe',
+        ]
+      : ['python3', 'python']
     
-    check.on('error', () => {
-      resolve(false)
-    })
+    let tried = 0
+    const tryNext = () => {
+      if (tried >= pythonCommands.length) {
+        console.error('❌ No Python interpreter found with OpenCV and NumPy installed')
+        resolve(false)
+        return
+      }
+      
+      const python = pythonCommands[tried++]
+      const check = spawn(python, ['--version'], {
+        stdio: 'pipe',
+      })
+      
+      let versionOutput = ''
+      check.stdout?.on('data', (data) => {
+        versionOutput += data.toString()
+      })
+      
+      check.on('close', (code) => {
+        if (code === 0) {
+          // Also verify it can import cv2, numpy, and optionally deepface
+          const importCheck = spawn(python, ['-c', 'import cv2; import numpy; import sys; print(sys.executable)'], {
+            stdio: 'pipe',
+          })
+          
+          let importOutput = ''
+          importCheck.stdout?.on('data', (data) => {
+            importOutput += data.toString()
+          })
+          
+          importCheck.on('close', (importCode) => {
+            if (importCode === 0) {
+              // Store the working Python command for later use
+              WORKING_PYTHON = python
+              const pythonPath = importOutput.trim() || python
+              console.log(`✅ Found working Python: ${python} at ${pythonPath}`)
+              
+              // Also check if DeepFace is available (optional, but log it)
+              const deepfaceCheck = spawn(python, ['-c', 'import deepface'], {
+                stdio: 'pipe',
+              })
+              deepfaceCheck.on('close', (dfCode) => {
+                if (dfCode === 0) {
+                  console.log(`✅ DeepFace is available in this Python environment`)
+                } else {
+                  console.log(`⚠️ DeepFace not available in this Python (optional)`)
+                }
+              })
+              
+              resolve(true)
+            } else {
+              console.log(`⚠️ Python ${python} found but cannot import cv2/numpy, trying next...`)
+              tryNext()
+            }
+          })
+          
+          importCheck.on('error', () => {
+            tryNext()
+          })
+        } else {
+          tryNext()
+        }
+      })
+      
+      check.on('error', () => {
+        tryNext()
+      })
+    }
+    
+    tryNext()
   })
 }
 
 /**
  * Check if required Python package is installed
+ * Maps pip package names to their actual import names
  */
 const checkPythonPackage = async (packageName) => {
   return new Promise((resolve) => {
-    const python = process.platform === 'win32' ? 'python' : 'python3'
-    const check = spawn(python, ['-c', `import ${packageName}`])
+    // Use the working Python command if available, otherwise try default
+    const python = WORKING_PYTHON || (process.platform === 'win32' ? 'python' : 'python3')
+    
+    // Map pip package names to import names
+    const importNameMap = {
+      'opencv-python': 'cv2',
+      'ultralytics': 'ultralytics',
+      'deepface': 'deepface',
+      'insightface': 'insightface',
+      'mediapipe': 'mediapipe',
+      'numpy': 'numpy',
+      'scipy': 'scipy',
+    }
+    
+    const importName = importNameMap[packageName] || packageName
+    
+    // Use pip show to check if package is installed (more reliable)
+    const check = spawn(python, ['-m', 'pip', 'show', packageName], {
+      stdio: 'pipe',
+    })
+    
+    let stdout = ''
+    let stderr = ''
+    
+    check.stdout.on('data', (data) => {
+      stdout += data.toString()
+    })
+    
+    check.stderr.on('data', (data) => {
+      stderr += data.toString()
+    })
     
     check.on('close', (code) => {
-      resolve(code === 0)
+      // pip show returns 0 if package is found
+      if (code === 0 && stdout.includes('Name:')) {
+        resolve(true)
+      } else {
+        // Fallback: try importing the package
+        const importCheck = spawn(python, ['-c', `import ${importName}`], {
+          stdio: 'pipe',
+        })
+        
+        importCheck.on('close', (importCode) => {
+          resolve(importCode === 0)
+        })
+        
+        importCheck.on('error', () => {
+          resolve(false)
+        })
+      }
     })
     
     check.on('error', () => {
@@ -105,7 +232,13 @@ const checkPythonPackage = async (packageName) => {
  */
 const runPythonScript = (args) => {
   return new Promise((resolve, reject) => {
-    const python = process.platform === 'win32' ? 'python' : 'python3'
+    // Use the working Python command if available, otherwise try default
+    const python = WORKING_PYTHON || (process.platform === 'win32' ? 'python' : 'python3')
+    
+    if (!python) {
+      reject(new Error('No working Python interpreter found. Please install Python 3.8+ and ensure opencv-python and numpy are installed.'))
+      return
+    }
     
     const script = spawn(python, [PYTHON_SCRIPT, ...args], {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -125,13 +258,46 @@ const runPythonScript = (args) => {
     script.on('close', (code) => {
       if (code === 0) {
         try {
-          const result = JSON.parse(stdout.trim())
-          resolve(result)
+          // Try to parse stdout as JSON
+          const output = stdout.trim()
+          if (!output) {
+            // If stdout is empty, check stderr for JSON error response
+            const stderrOutput = stderr.trim()
+            if (stderrOutput) {
+              try {
+                const errorResult = JSON.parse(stderrOutput)
+                resolve(errorResult) // Return error result as valid response
+              } catch {
+                reject(new Error(`Python script returned empty output. stderr: ${stderrOutput}`))
+              }
+            } else {
+              reject(new Error('Python script returned empty output'))
+            }
+          } else {
+            const result = JSON.parse(output)
+            resolve(result)
+          }
         } catch (error) {
-          reject(new Error(`Failed to parse Python output: ${error.message}`))
+          // If parsing fails, include both stdout and stderr in error
+          const errorMsg = `Failed to parse Python output: ${error.message}`
+          const details = `stdout: ${stdout.substring(0, 500)}\nstderr: ${stderr.substring(0, 500)}`
+          reject(new Error(`${errorMsg}\n${details}`))
         }
       } else {
-        reject(new Error(`Python script failed: ${stderr || stdout}`))
+        // Non-zero exit code - try to parse stderr as JSON first
+        let errorMessage = stderr || stdout || 'Unknown error'
+        try {
+          // Check if stderr contains JSON error response
+          const errorResult = JSON.parse(stderr.trim())
+          if (errorResult.error) {
+            errorMessage = errorResult.error
+          }
+          // Return the error result so it can be handled gracefully
+          resolve(errorResult)
+        } catch {
+          // Not JSON, use the raw error message
+          reject(new Error(`Python script failed (exit code ${code}): ${errorMessage}`))
+        }
       }
     })
     
@@ -154,7 +320,12 @@ export const detectFaces = async (imagePath, model = 'yolov8-face') => {
     // Check Python availability
     const pythonAvailable = await checkPythonAvailable()
     if (!pythonAvailable) {
-      throw new Error('Python is not available. Please install Python 3.8+ to use face detection models.')
+      return {
+        face_count: 0,
+        faces: [],
+        model,
+        error: 'Python is not available. Please install Python 3.8+ to use face detection models.',
+      }
     }
     
     // Run detection
@@ -164,14 +335,35 @@ export const detectFaces = async (imagePath, model = 'yolov8-face') => {
       '--image', imagePath,
     ])
     
+    // If result has an error, return it gracefully
+    if (result.error) {
+      console.error('Face detection Python error:', result.error)
+      return {
+        face_count: 0,
+        faces: [],
+        model: result.model || model,
+        error: result.error,
+      }
+    }
+    
     return result
   } catch (error) {
     console.error('Face detection error:', error)
+    // Extract more detailed error message
+    let errorMessage = error.message
+    if (errorMessage.includes('Python script failed')) {
+      // Try to extract the actual error from the message
+      const match = errorMessage.match(/Python script failed[^:]*:\s*(.+)/)
+      if (match) {
+        errorMessage = match[1]
+      }
+    }
+    
     return {
       face_count: 0,
       faces: [],
       model,
-      error: error.message,
+      error: errorMessage,
     }
   }
 }
@@ -233,6 +425,24 @@ export const isModelAvailable = async (model) => {
   // Check Python package
   if (modelInfo.requiresPython && modelInfo.pythonPackage) {
     const packageAvailable = await checkPythonPackage(modelInfo.pythonPackage)
+    if (!packageAvailable) {
+      return false
+    }
+    
+    // YOLOv8 models also require opencv-python and numpy
+    if (model === 'yolov8-face' || model.startsWith('yolov8')) {
+      const opencvAvailable = await checkPythonPackage('opencv-python')
+      const numpyAvailable = await checkPythonPackage('numpy')
+      return opencvAvailable && numpyAvailable
+    }
+    
+    // DeepFace also requires opencv-python and numpy
+    if (model === 'deepface' || model.includes('deepface')) {
+      const opencvAvailable = await checkPythonPackage('opencv-python')
+      const numpyAvailable = await checkPythonPackage('numpy')
+      return opencvAvailable && numpyAvailable && packageAvailable
+    }
+    
     return packageAvailable
   }
   
@@ -241,21 +451,32 @@ export const isModelAvailable = async (model) => {
 
 /**
  * Get available face detection models
+ * Filters out duplicate YOLOv8 variants and only shows the main one
  */
 export const getAvailableModels = async () => {
   const pythonAvailable = await checkPythonAvailable()
   
-  const models = Object.entries(FACE_DETECTION_MODELS).map(([id, info]) => ({
-    id,
-    name: info.name,
-    description: info.description,
-    requiresApiKey: info.requiresApiKey,
-    requiresPython: info.requiresPython,
-  }))
+  // Filter models - only show main YOLOv8 model, hide variants unless specifically needed
+  const modelsToShow = Object.entries(FACE_DETECTION_MODELS)
+    .filter(([id]) => {
+      // Show main yolov8-face, but hide variants (yolov8n-face, yolov8s-face, etc.)
+      // Variants are only useful for advanced users
+      if (id.startsWith('yolov8') && id !== 'yolov8-face') {
+        return false // Hide YOLOv8 variants
+      }
+      return true
+    })
+    .map(([id, info]) => ({
+      id,
+      name: info.name,
+      description: info.description,
+      requiresApiKey: info.requiresApiKey,
+      requiresPython: info.requiresPython,
+    }))
   
   // Check availability for each model
   const availableModels = []
-  for (const model of models) {
+  for (const model of modelsToShow) {
     if (pythonAvailable) {
       const available = await isModelAvailable(model.id)
       availableModels.push({
@@ -269,6 +490,13 @@ export const getAvailableModels = async () => {
       })
     }
   }
+  
+  // Sort models: available first, then by name
+  availableModels.sort((a, b) => {
+    if (a.isAvailable && !b.isAvailable) return -1
+    if (!a.isAvailable && b.isAvailable) return 1
+    return a.name.localeCompare(b.name)
+  })
   
   return availableModels
 }

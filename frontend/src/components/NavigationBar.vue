@@ -11,7 +11,7 @@
             <Zap class="w-4 h-4 text-background" />
           </div>
           <span class="font-bold text-lg bg-gradient-to-r from-primary to-accent-1 bg-clip-text text-transparent">
-            VerifyAI
+            Smart Vote Kenya
           </span>
         </router-link>
 

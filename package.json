@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "docx": "^9.5.1",
+    "mammoth": "^1.11.0",
+    "markdown-docx": "^1.4.3"
+  }
+}

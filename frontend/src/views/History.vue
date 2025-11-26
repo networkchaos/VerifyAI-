@@ -445,6 +445,36 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- Retry Test Buttons (for failed tests) -->
+              <div
+                v-if="!selectedVerification.isApproved"
+                class="glass rounded-xl p-6 border-2 border-primary/30 bg-primary/5"
+              >
+                <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <RefreshCw class="w-5 h-5 text-primary" />
+                  Retry This Test
+                </h3>
+                <p class="text-sm text-foreground/70 mb-4">
+                  You can retry this test with the same data or edit the details before retrying.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                  <button
+                    @click="retryWithSameData"
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-primary to-accent-1 hover:from-primary-dark hover:to-primary text-white font-semibold rounded-lg transition-all duration-300 glow-cyan flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw class="w-4 h-4" />
+                    Retry with Same Data
+                  </button>
+                  <button
+                    @click="retryWithEdit"
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-accent-2 to-accent-3 hover:from-accent-2 hover:to-accent-3 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Edit class="w-4 h-4" />
+                    Edit & Retry
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -471,7 +501,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { History, CheckCircle, AlertCircle, Loader2, Plus, ArrowLeft, Eye, X } from 'lucide-vue-next'
+import { History, CheckCircle, AlertCircle, Loader2, Plus, ArrowLeft, Eye, X, RefreshCw, Edit } from 'lucide-vue-next'
 
 const router = useRouter()
 const verifications = ref([])
@@ -533,6 +563,48 @@ const openDetails = async (id) => {
 
 const closeDetails = () => {
   selectedVerification.value = null
+}
+
+const retryWithSameData = () => {
+  if (!selectedVerification.value) return
+  
+  // Store retry data in localStorage
+  const retryData = {
+    fullName: selectedVerification.value.name,
+    nationalId: selectedVerification.value.idNumber,
+    dateOfBirth: selectedVerification.value.dateOfBirth,
+    phoneNumber: selectedVerification.value.phone,
+    address: selectedVerification.value.address,
+    retryMode: 'same', // Indicates retry with same data
+    verificationId: selectedVerification.value.id,
+  }
+  
+  localStorage.setItem('retryTestData', JSON.stringify(retryData))
+  
+  // Navigate to register page
+  router.push('/register')
+}
+
+const retryWithEdit = () => {
+  if (!selectedVerification.value) return
+  
+  // Store retry data in localStorage with edit mode
+  const retryData = {
+    fullName: selectedVerification.value.name,
+    nationalId: selectedVerification.value.idNumber,
+    dateOfBirth: selectedVerification.value.dateOfBirth,
+    phoneNumber: selectedVerification.value.phone,
+    address: selectedVerification.value.address,
+    retryMode: 'edit', // Indicates retry with ability to edit
+    verificationId: selectedVerification.value.id,
+    validationErrors: selectedVerification.value.validationErrors,
+    flaggedReason: selectedVerification.value.flaggedReason,
+  }
+  
+  localStorage.setItem('retryTestData', JSON.stringify(retryData))
+  
+  // Navigate to register page
+  router.push('/register')
 }
 
 watch(filterStatus, () => {

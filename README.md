@@ -1,17 +1,42 @@
-# AI-Powered Voter Registration System
+# Smart Vote Kenya
 
-Smart, secure, and efficient digital voter registration using Artificial Intelligence with OCR and facial recognition.
+The intelligent voter registration system - Smart, secure, and efficient digital voter registration using Artificial Intelligence with OCR and facial recognition.
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### One-Command Installation (Recommended)
+
+After cloning this repo:
+
+- **On Windows (PowerShell):**
+  ```powershell
+  .\install-all.ps1
+  ```
+
+- **On Linux / macOS (Terminal):**
+  ```bash
+  chmod +x install-all.sh
+  ./install-all.sh
+  ```
+
+This will:
+- Install **backend** Node.js packages
+- Install **frontend** Node.js packages
+- Install **Python** dependencies (for face detection)
+- Run a quick verification of the Python models
+
+If anything fails, see `INSTALL.md` for detailed manual steps.
+
+### Manual Setup (Alternative)
+
+#### Prerequisites
 
 Before you begin, make sure you have installed:
 - **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
 - **PostgreSQL** (v12 or higher) - [Download](https://www.postgresql.org/download/)
 - **Python 3.8+** (optional, for face detection models) - [Download](https://www.python.org/downloads/)
 
-### Step 1: Database Setup
+#### Step 1: Database Setup
 
 1. **Start PostgreSQL service** (if not running)
 
@@ -26,7 +51,7 @@ Before you begin, make sure you have installed:
    createdb voter_registration
    ```
 
-### Step 2: Backend Setup
+#### Step 2: Backend Setup
 
 1. **Navigate to backend folder:**
    ```bash
@@ -80,7 +105,7 @@ Before you begin, make sure you have installed:
    Server running on port 5000
    ```
 
-### Step 3: Frontend Setup
+#### Step 3: Frontend Setup
 
 1. **Open a NEW terminal window** and navigate to frontend:
    ```bash
@@ -103,14 +128,14 @@ Before you begin, make sure you have installed:
    ➜  Local:   http://localhost:5173/
    ```
 
-### Step 4: Access the Application
+#### Step 4: Access the Application
 
 Open your browser and go to: **http://localhost:5173**
 
 ## 📁 Project Structure
 
 ```
-VerifyAI/
+Smart Vote Kenya/
 ├── backend/              # Node.js/Express backend
 │   ├── db/              # Database initialization
 │   ├── routes/          # API routes

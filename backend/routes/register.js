@@ -91,13 +91,29 @@ router.post('/', upload.fields([{ name: 'idImage' }, { name: 'idBackImage' }, { 
         phoneNumber,
         address,
       },
+      extractedData: result.ocrResult ? {
+        fullName: result.ocrResult.fullName || result.ocrResult.name || null,
+        idNumber: result.ocrResult.idNumber || null,
+        dateOfBirth: result.ocrResult.dateOfBirth || result.ocrResult.dob || null,
+        sex: result.ocrResult.sex || null,
+        districtOfBirth: result.ocrResult.districtOfBirth || null,
+        placeOfIssue: result.ocrResult.placeOfIssue || null,
+        dateOfIssue: result.ocrResult.dateOfIssue || null,
+        method: result.ocrResult.method || null,
+      } : null,
     })
   } catch (error) {
     console.error('Registration error:', error)
-    res.status(500).json({
-      status: 'error',
-      message: error.message || 'Registration failed. Please try again.',
-    })
+    console.error('Error stack:', error.stack)
+    
+    // Ensure response is sent even if there's an error
+    if (!res.headersSent) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message || 'Registration failed. Please try again.',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      })
+    }
   }
 })
 

@@ -13,6 +13,7 @@ dist/
 # Misc
 .DS_Store
 *.log
+*.docx
 .env
 .env.local
 .env.development.local

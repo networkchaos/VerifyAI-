@@ -4,6 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import { extractIDText } from '../services/registration.js'
+import { validateIdImage } from '../services/idImageValidator.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -46,26 +47,64 @@ router.post('/', upload.single('idImage'), async (req, res) => {
 
     const { ocrModel } = req.body
     const imagePath = req.file.path
-    const extracted = await extractIDText(imagePath, ocrModel || 'tesseract')
+    
+    // Validate that the image is actually an ID card (not a selfie)
+    console.log('🔍 Validating uploaded image...')
+    const validation = await validateIdImage(imagePath)
+    
+    if (!validation.isIdCard && validation.confidence > 0.6) {
+      console.warn('⚠️ Image validation failed - likely not an ID card')
+      return res.status(400).json({
+        status: 'error',
+        message: 'The uploaded image does not appear to be an ID card. Please upload the front side of your national ID card, not a selfie photo.',
+        validation: {
+          isIdCard: false,
+          reason: validation.reason,
+          confidence: validation.confidence,
+        },
+      })
+    }
+    
+    // If validation is uncertain (low confidence), proceed but warn
+    if (!validation.isIdCard && validation.confidence <= 0.6) {
+      console.warn('⚠️ Image validation uncertain, proceeding with extraction')
+    }
+    
+    const extracted = await extractIDText(imagePath, ocrModel || 'tesseract', true)
+
+    // Ensure we have a valid result object
+    if (!extracted) {
+      throw new Error('Extraction returned no results')
+    }
 
     res.json({
       status: 'success',
       extracted: {
-        fullName: extracted.fullName || extracted.name,
-        idNumber: extracted.idNumber,
-        dateOfBirth: extracted.dateOfBirth || extracted.dob,
-        sex: extracted.sex,
-        districtOfBirth: extracted.districtOfBirth,
-        placeOfIssue: extracted.placeOfIssue,
-        dateOfIssue: extracted.dateOfIssue,
+        fullName: extracted.fullName || extracted.name || null,
+        idNumber: extracted.idNumber || null,
+        dateOfBirth: extracted.dateOfBirth || extracted.dob || null,
+        sex: extracted.sex || null,
+        districtOfBirth: extracted.districtOfBirth || null,
+        placeOfIssue: extracted.placeOfIssue || null,
+        dateOfIssue: extracted.dateOfIssue || null,
+      },
+      validation: validation.isIdCard ? undefined : {
+        warning: true,
+        reason: validation.reason,
       },
     })
   } catch (error) {
     console.error('Extract ID data error:', error)
-    res.status(500).json({
-      status: 'error',
-      message: error.message || 'Failed to extract ID data',
-    })
+    console.error('Error stack:', error.stack)
+    
+    // Ensure response is sent even if there's an error
+    if (!res.headersSent) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message || 'Failed to extract ID data',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      })
+    }
   }
 })
 

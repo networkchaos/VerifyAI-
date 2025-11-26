@@ -17,10 +17,16 @@ router.get('/', async (req, res) => {
     })
   } catch (error) {
     console.error('Error fetching face detection models:', error)
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch face detection models',
-    })
+    console.error('Error stack:', error.stack)
+    
+    // Ensure response is sent even if there's an error
+    if (!res.headersSent) {
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch face detection models',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      })
+    }
   }
 })
 
